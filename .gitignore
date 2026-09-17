@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+.env
+.env.local
+*.tsbuildinfo
+.aetherflow/
+.vitest/
+
+# 本地运行产物（事件库 / 会话快照）
+*.db
+*.db-shm
+*.db-wal

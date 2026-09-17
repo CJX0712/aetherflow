@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AetherFlow — 通用 AI Agent 运行时</title>
+<style>
+  :root {
+    --bg: #07090f;
+    --bg-soft: #0d1018;
+    --panel: #12161f;
+    --panel-2: #161b26;
+    --border: #232a38;
+    --text: #e6e9ef;
+    --muted: #8b94a7;
+    --accent: #5b8cff;
+    --accent-2: #7c5cff;
+    --ok: #3ecf8e;
+    --warn: #f5a623;
+    --err: #ff5f6d;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ── Hero ───────────────────────────────────────────── */
+  header {
+    padding: 88px 0 64px;
+    background:
+      radial-gradient(1100px 460px at 18% -10%, rgba(91,140,255,.18), transparent 62%),
+      radial-gradient(900px 420px at 88% 0%, rgba(124,92,255,.14), transparent 60%);
+    border-bottom: 1px solid var(--border);
+  }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 12px; border-radius: 999px;
+    border: 1px solid var(--border); background: rgba(255,255,255,.03);
+    font-size: 12px; color: var(--muted); letter-spacing: .04em;
+    font-family: var(--mono);
+  }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 10px var(--ok); }
+  h1 {
+    font-size: clamp(38px, 6vw, 66px); line-height: 1.08;
+    margin: 22px 0 18px; letter-spacing: -.02em; font-weight: 700;
+    background: linear-gradient(120deg, #fff 12%, #a9bcff 52%, #c9b6ff 88%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .sub { font-size: 19px; color: var(--muted); max-width: 700px; }
+  .sub b { color: var(--text); font-weight: 600; }
+  .cta { display: flex; gap: 12px; margin-top: 32px; flex-wrap: wrap; }
+  .btn {
+    padding: 11px 20px; border-radius: 9px; font-size: 14px; font-weight: 600;
+    border: 1px solid var(--border); background: var(--panel); color: var(--text);
+    cursor: pointer; transition: .16s; font-family: inherit;
+  }
+  .btn:hover { transform: translateY(-1px); border-color: #35405a; }
+  .btn.primary { background: linear-gradient(120deg, var(--accent), var(--accent-2)); border-color: transparent; color: #fff; }
+  .btn.primary:hover { box-shadow: 0 8px 26px rgba(91,140,255,.32); }
+  .install {
+    margin-top: 26px; display: inline-flex; align-items: center; gap: 12px;
+    font-family: var(--mono); font-size: 13px;
+    background: var(--panel); border: 1px solid var(--border);
+    padding: 10px 16px; border-radius: 9px; color: var(--muted);
+  }
+  .install span { color: var(--ok); }
+
+  /* ── Sections ───────────────────────────────────────── */
+  section { padding: 72px 0; border-bottom: 1px solid var(--border); }
+  h2 { font-size: 30px; margin-bottom: 12px; letter-spacing: -.01em; }
+  .lead { color: var(--muted); max-width: 720px; margin-bottom: 34px; }
+
+  /* ── Architecture ───────────────────────────────────── */
+  .arch { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+  .layer {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 13px; padding: 18px; position: relative; overflow: hidden;
+  }
+  .layer::before {
+    content: ""; position: absolute; inset: 0 0 auto 0; height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2)); opacity: .8;
+  }
+  .layer h3 { font-size: 15px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+  .layer .tag { font-family: var(--mono); font-size: 11px; color: var(--accent); }
+  .layer p { font-size: 13px; color: var(--muted); }
+  .layer ul { list-style: none; margin-top: 10px; font-size: 12.5px; color: #aeb6c7; }
+  .layer li { padding: 3px 0 3px 14px; position: relative; }
+  .layer li::before { content: "▸"; position: absolute; left: 0; color: var(--accent); }
+
+  /* ── Event stream demo ──────────────────────────────── */
+  .demo { display: grid; grid-template-columns: 1.15fr .85fr; gap: 20px; }
+  @media (max-width: 900px) { .demo { grid-template-columns: 1fr; } }
+  .terminal {
+    background: #05070c; border: 1px solid var(--border); border-radius: 13px;
+    overflow: hidden; display: flex; flex-direction: column; min-height: 430px;
+  }
+  .tbar {
+    display: flex; align-items: center; gap: 8px; padding: 11px 14px;
+    background: var(--panel); border-bottom: 1px solid var(--border);
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+  }
+  .lights { display: flex; gap: 6px; margin-right: 6px; }
+  .lights i { width: 10px; height: 10px; border-radius: 50%; display: block; }
+  .tbody {
+    flex: 1; overflow-y: auto; padding: 14px; font-family: var(--mono);
+    font-size: 12.5px; line-height: 1.75;
+  }
+  .ev { display: flex; gap: 10px; padding: 3px 0; animation: fade .28s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .ev .t { color: #4d566b; min-width: 66px; }
+  .ev .k { min-width: 138px; font-weight: 600; }
+  .ev .v { color: #9aa4b8; word-break: break-all; }
+  .k.run_start, .k.run_end, .k.step_start, .k.step_end { color: var(--accent); }
+  .k.model_start, .k.model_end, .k.usage { color: #c9b6ff; }
+  .k.tool_start, .k.tool_end { color: var(--warn); }
+  .k.text_delta { color: var(--ok); }
+  .k.context_compacted { color: #ff9ecd; }
+  .k.error { color: var(--err); }
+  .metrics {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 13px; padding: 18px;
+  }
+  .metrics h3 { font-size: 14px; margin-bottom: 14px; color: var(--muted); font-weight: 600; }
+  .mgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .m {
+    background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 13px;
+  }
+  .m .label { font-size: 11px; color: var(--muted); letter-spacing: .05em; text-transform: uppercase; }
+  .m .val { font-family: var(--mono); font-size: 21px; font-weight: 600; margin-top: 3px; }
+  .m .val.green { color: var(--ok); }
+  .m .val.blue { color: var(--accent); }
+  .m .val.purple { color: #c9b6ff; }
+  .bar { height: 4px; border-radius: 2px; background: #232a38; margin-top: 9px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); width: 0; transition: width .5s; }
+
+  /* ── Features ───────────────────────────────────────── */
+  .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(268px, 1fr)); gap: 16px; }
+  .f {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 13px; padding: 22px; transition: .18s;
+  }
+  .f:hover { border-color: #35405a; transform: translateY(-2px); }
+  .f .ico {
+    width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center;
+    background: linear-gradient(135deg, rgba(91,140,255,.18), rgba(124,92,255,.18));
+    border: 1px solid var(--border); font-size: 16px; margin-bottom: 13px;
+  }
+  .f h4 { font-size: 15px; margin-bottom: 7px; }
+  .f p { font-size: 13.5px; color: var(--muted); }
+  .f code { font-family: var(--mono); font-size: 12px; color: #c9b6ff; }
+
+  /* ── Code ───────────────────────────────────────────── */
+  .tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+  .tab {
+    padding: 7px 14px; border-radius: 8px; font-size: 13px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--panel); color: var(--muted);
+    font-family: var(--mono); transition: .15s;
+  }
+  .tab.active { color: var(--text); border-color: var(--accent); background: rgba(91,140,255,.1); }
+  pre {
+    background: #05070c; border: 1px solid var(--border); border-radius: 13px;
+    padding: 20px; overflow-x: auto; font-family: var(--mono); font-size: 13px; line-height: 1.7;
+  }
+  .c-key { color: #7c9cff; }
+  .c-str { color: #7ee7a8; }
+  .c-com { color: #5a6377; font-style: italic; }
+  .c-fn { color: #c9b6ff; }
+  .c-num { color: #f5a623; }
+
+  /* ── Compare table ──────────────────────────────────── */
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+  td:first-child { color: var(--text); font-weight: 500; }
+  .yes { color: var(--ok); }
+  .no { color: #4d566b; }
+
+  footer { padding: 48px 0; color: var(--muted); font-size: 13px; }
+  footer .wrap { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="badge"><i class="dot"></i> TypeScript · Node 22 · MIT · v0.1.0</div>
+    <h1>AetherFlow</h1>
+    <p class="sub">
+      一个<b>通用、可持久化、可观测</b>的 AI Agent 运行时。
+      统一十余家模型供应商的协议差异，把<b>工具失败</b>变成模型自我修正的回路，
+      用<b>事件溯源</b>让崩溃可恢复，用<b>录制重放</b>让回归测试零成本且确定性。
+    </p>
+    <div class="cta">
+      <button class="btn primary" onclick="document.getElementById('demo').scrollIntoView({behavior:'smooth'})">▶ 观看运行过程</button>
+      <button class="btn" onclick="document.getElementById('code').scrollIntoView({behavior:'smooth'})">查看代码</button>
+    </div>
+    <div class="install"><span>$</span> npm install aetherflow</div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2>分层架构</h2>
+    <p class="lead">每一层都可独立使用。你可以只用它的流式工具，也可以只用模型网关，而不必接受整套范式。</p>
+    <div class="arch">
+      <div class="layer">
+        <h3>Agent <span class="tag">编排</span></h3>
+        <p>ReAct 循环 · 计划执行 · 多智能体</p>
+        <ul><li>步数 / 预算 / 超时护栏</li><li>结构化输出与自动修复</li><li>上下文自适应压缩</li></ul>
+      </div>
+      <div class="layer">
+        <h3>Tools <span class="tag">能力</span></h3>
+        <p>zod 类型安全 · MCP 原生</p>
+        <ul><li>失败回喂而非中断</li><li>权限审批与沙箱路径</li><li>并发执行与输出截断</li></ul>
+      </div>
+      <div class="layer">
+        <h3>Models <span class="tag">网关</span></h3>
+        <p>一个协议，十余家供应商</p>
+        <ul><li>OpenAI 全生态兼容</li><li>Anthropic / Gemini 原生</li><li>统一用量与成本归因</li></ul>
+      </div>
+      <div class="layer">
+        <h3>Runtime <span class="tag">内核</span></h3>
+        <p>零依赖原语</p>
+        <ul><li>惰性流与 tee 多播</li><li>结构化并发（无孤儿任务）</li><li>抖动退避与断路器</li></ul>
+      </div>
+      <div class="layer">
+        <h3>Memory <span class="tag">持久化</span></h3>
+        <p>SQLite 事件溯源</p>
+        <ul><li>崩溃可恢复</li><li>会话续接</li><li>零原生依赖</li></ul>
+      </div>
+      <div class="layer">
+        <h3>Observability <span class="tag">可观测</span></h3>
+        <p>Trace · 指标 · 重放</p>
+        <ul><li>OpenTelemetry 语义 span</li><li>token / 成本归集</li><li>录制一次，离线重放</li></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="demo">
+  <div class="wrap">
+    <h2>一次运行的完整事件流</h2>
+    <p class="lead">
+      下面这段是真实运行时的事件序列（离线模拟）。UI 渲染、持久化、指标统计
+      消费的是<b>同一份事件流</b> —— 这也是 AetherFlow 不需要三套互不相干的数据管道的原因。
+    </p>
+    <div class="demo">
+      <div class="terminal">
+        <div class="tbar">
+          <span class="lights"><i style="background:#ff5f6d"></i><i style="background:#f5a623"></i><i style="background:#3ecf8e"></i></span>
+          aetherflow run — agent: research-assistant
+          <span style="margin-left:auto"><button class="btn" id="runBtn" style="padding:4px 12px;font-size:12px">重新运行</button></span>
+        </div>
+        <div class="tbody" id="stream"></div>
+      </div>
+      <div class="metrics">
+        <h3>运行指标（实时聚合）</h3>
+        <div class="mgrid">
+          <div class="m"><div class="label">Steps</div><div class="val blue" id="m-steps">0</div><div class="bar"><i id="b-steps"></i></div></div>
+          <div class="m"><div class="label">Tool calls</div><div class="val" id="m-tools">0</div><div class="bar"><i id="b-tools"></i></div></div>
+          <div class="m"><div class="label">Tokens</div><div class="val purple" id="m-tokens">0</div><div class="bar"><i id="b-tokens"></i></div></div>
+          <div class="m"><div class="label">Cost</div><div class="val green" id="m-cost">$0</div><div class="bar"><i id="b-cost"></i></div></div>
+        </div>
+        <div class="m" style="margin-top:12px">
+          <div class="label">Finish reason</div>
+          <div class="val" id="m-finish" style="font-size:15px;color:var(--muted)">pending…</div>
+        </div>
+        <p style="font-size:12.5px;color:var(--muted);margin-top:14px">
+          指标由 <code style="font-family:var(--mono);color:#c9b6ff">collectMetrics(events)</code> 从同一份事件流聚合而来，
+          与你在终端看到的数字完全一致。
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>设计取舍</h2>
+    <p class="lead">我们做对了几件别人容易做错的事。</p>
+    <div class="features">
+      <div class="f">
+        <div class="ico">↺</div>
+        <h4>工具失败是反馈，不是异常</h4>
+        <p>工具不存在、参数不合法、执行报错，都会作为 <code>tool_result</code> 回喂模型，触发自我修正，而不是让整个 Agent 崩溃。</p>
+      </div>
+      <div class="f">
+        <div class="ico">⧉</div>
+        <h4>结构化并发</h4>
+        <p><code>TaskGroup</code> 保证作用域退出时子任务必然结束或被取消。用 <code>Promise.all</code> 会留下继续烧钱的孤儿任务。</p>
+      </div>
+      <div class="f">
+        <div class="ico">◇</div>
+        <h4>不拆散工具调用与结果</h4>
+        <p>上下文压缩时保证 <code>tool_call</code> 与其 <code>tool_result</code> 成对保留，否则供应商会直接拒绝请求 —— 长对话崩溃的常见根因。</p>
+      </div>
+      <div class="f">
+        <div class="ico">⏱</div>
+        <h4>崩溃可恢复</h4>
+        <p>每个事件落盘、结果物化快照。进程重启后可从事件流重建现场，而不是让用户重跑一遍再付一次钱。</p>
+      </div>
+      <div class="f">
+        <div class="ico">⊘</div>
+        <h4>不信任模型输出</h4>
+        <p>数学表达式用自研递归下降解析器求值，文件工具强制根目录校验。来自模型的输入被视为不可信输入。</p>
+      </div>
+      <div class="f">
+        <div class="ico">◫</div>
+        <h4>录制一次，重放千次</h4>
+        <p>把真实调用固化为资产，回归测试无需联网、无需付费、结果确定 —— 这是 Agent 能进 CI 的前提。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="code">
+  <div class="wrap">
+    <h2>代码</h2>
+    <p class="lead">类型安全贯穿始终：工具入参由 zod 推导，结构化输出直接得到已校验的对象。</p>
+    <div class="tabs">
+      <button class="tab active" data-tab="quick">快速开始</button>
+      <button class="tab" data-tab="tools">工具与护栏</button>
+      <button class="tab" data-tab="multi">多智能体</button>
+      <button class="tab" data-tab="eval">评测</button>
+    </div>
+    <pre id="pane"></pre>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>能力对照</h2>
+    <p class="lead">与常见做法相比，AetherFlow 的差异集中在工程可靠性上。</p>
+    <table>
+      <thead><tr><th>能力</th><th>朴素实现</th><th>AetherFlow</th></tr></thead>
+      <tbody>
+        <tr><td>工具执行失败</td><td class="no">抛异常终止</td><td class="yes">回喂模型自我修正</td></tr>
+        <tr><td>并发工具调用</td><td class="no">Promise.all 孤儿任务</td><td class="yes">结构化并发，可取消</td></tr>
+        <tr><td>上下文溢出</td><td class="no">API 报错崩溃</td><td class="yes">自适应压缩，保持调用配对</td></tr>
+        <tr><td>长任务中断</td><td class="no">从头再来</td><td class="yes">事件溯源，可恢复</td></tr>
+        <tr><td>回归测试</td><td class="no">真调 API，慢且不确定</td><td class="yes">录制重放，离线确定</td></tr>
+        <tr><td>成本可见性</td><td class="no">月底才知道</td><td class="yes">每次运行实时归集</td></tr>
+        <tr><td>换模型</td><td class="no">改一堆适配代码</td><td class="yes">改一个字符串</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>AetherFlow · MIT License · 作者 晨星 (Chenxing)</div>
+    <div>Node.js ≥ 22.5 · TypeScript 严格模式 · 105 项测试</div>
+  </div>
+</footer>
+
+<script>
+const EVENTS = [
+  { k: "run_start",  v: 'agent="research-assistant" runId=run_9f2c' },
+  { k: "step_start", v: "step=1", meters: { steps: 1 } },
+  { k: "model_start",v: "model=claude-sonnet-4-20250514" },
+  { k: "text_delta", v: "我需要先确认当前时间，再查询天气。" },
+  { k: "tool_start", v: 'current_datetime({"timeZone":"Asia/Shanghai"})', meters: { tools: 1 } },
+  { k: "tool_end",   v: 'current_datetime ok 11ms → {"iso":"2026-09-17T16:55:51Z"}' },
+  { k: "model_end",  v: "step=1 usage={in:412 out:38}", meters: { tokens: 450 } },
+  { k: "step_end",   v: "step=1" },
+  { k: "step_start", v: "step=2", meters: { steps: 2 } },
+  { k: "model_start",v: "model=claude-sonnet-4-20250514" },
+  { k: "tool_start", v: 'http_request({"url":"https://api.weather.example/shenzhen"})', meters: { tools: 2 } },
+  { k: "tool_end",   v: "http_request ok 240ms → {\"temp\":28,\"cond\":\"sunny\"}" },
+  { k: "tool_start", v: 'calculator({"expression":"(28-21)*9/5+32"})', meters: { tools: 3 } },
+  { k: "tool_end",   v: "calculator ok 1ms → 44.6" },
+  { k: "model_end",  v: "step=2 usage={in:1_284 out:96}", meters: { tokens: 1830 } },
+  { k: "step_end",   v: "step=2" },
+  { k: "step_start", v: "step=3", meters: { steps: 3 } },
+  { k: "text_delta", v: "深圳 28°C 晴，北京 21°C 多云，温差 7°C（12.6°F）。" },
+  { k: "usage",      v: "total usage={in:1_912 out:271} cost=$0.003812", meters: { cost: 0.003812 } },
+  { k: "run_end",    v: 'finishReason="completed" steps=3 durationMs=488' },
+];
+
+const PANES = {
+  quick: `<span class="c-com">// 一次调用，换模型只改字符串</span>
+<span class="c-key">import</span> { createAgent, createBuiltinTools } <span class="c-key">from</span> <span class="c-str">"aetherflow"</span>;
+<span class="c-key">import</span> { z } <span class="c-key">from</span> <span class="c-str">"zod"</span>;
+
+<span class="c-key">const</span> agent = <span class="c-fn">createAgent</span>({
+  name: <span class="c-str">"analyst"</span>,
+  model: <span class="c-str">"anthropic:claude-sonnet-4-20250514"</span>,   <span class="c-com">// 或 openai:gpt-4o / deepseek:deepseek-chat</span>
+  instructions: <span class="c-str">"用工具核实每一个数字，不要凭印象回答。"</span>,
+  tools: <span class="c-fn">createBuiltinTools</span>({ shell: <span class="c-key">false</span> }),
+  output: <span class="c-fn">z.object</span>({ summary: <span class="c-fn">z.string</span>(), confidence: <span class="c-fn">z.number</span>().<span class="c-fn">min</span>(<span class="c-num">0</span>).<span class="c-fn">max</span>(<span class="c-num">1</span>) }),
+  maxSteps: <span class="c-num">12</span>,
+  maxCostUsd: <span class="c-num">0.5</span>,
+});
+
+<span class="c-key">const</span> result = <span class="c-key">await</span> agent.<span class="c-fn">run</span>({ input: <span class="c-str">"分析这份财报的关键风险"</span> });
+<span class="c-com">// result.output 已通过 zod 校验；result.costUsd 实时可用</span>
+<span class="c-key">for</span> (<span class="c-key">await const</span> ev <span class="c-key">of</span> agent.<span class="c-fn">stream</span>({ input: <span class="c-str">"追问：现金流呢？"</span> })) {
+  <span class="c-key">if</span> (ev.type === <span class="c-str">"text_delta"</span>) process.stdout.<span class="c-fn">write</span>(ev.delta);
+}`,
+  tools: `<span class="c-key">import</span> { defineTool, connectMcpServer } <span class="c-key">from</span> <span class="c-str">"aetherflow"</span>;
+<span class="c-key">import</span> { z } <span class="c-key">from</span> <span class="c-str">"zod"</span>;
+
+<span class="c-com">// 1) 类型安全的内联工具：入参由 zod 推导 JSON Schema</span>
+<span class="c-key">const</span> search = <span class="c-fn">defineTool</span>({
+  name: <span class="c-str">"search_docs"</span>,
+  description: <span class="c-str">"检索内部文档库，返回最相关的段落。"</span>,
+  inputSchema: <span class="c-fn">z.object</span>({ query: <span class="c-fn">z.string</span>(), topK: <span class="c-fn">z.number</span>().<span class="c-fn">int</span>().<span class="c-fn">default</span>(<span class="c-num">5</span>) }),
+  execute: <span class="c-key">async</span> ({ query, topK }, ctx) => <span class="c-fn">vectorSearch</span>(query, topK, ctx.signal),
+});
+
+<span class="c-com">// 2) 直接复用社区 MCP Server 的工具</span>
+<span class="c-key">const</span> gh = <span class="c-key">await</span> <span class="c-fn">connectMcpServer</span>({
+  name: <span class="c-str">"github"</span>,
+  transport: { type: <span class="c-str">"stdio"</span>, command: <span class="c-str">"npx"</span>, args: [<span class="c-str">"-y"</span>, <span class="c-str">"@modelcontextprotocol/server-github"</span>] },
+  prefixToolNames: <span class="c-key">true</span>,
+});
+<span class="c-key">const</span> mcpTools = <span class="c-key">await</span> gh.<span class="c-fn">tools</span>();
+
+<span class="c-com">// 3) 护栏内建：步数、预算、超时、人工审批</span>
+<span class="c-key">const</span> agent = <span class="c-fn">createAgent</span>({
+  name: <span class="c-str">"ops"</span>,
+  model: <span class="c-str">"openai:gpt-4o"</span>,
+  instructions: <span class="c-str">"你是运维助手。"</span>,
+  tools: [search, ...mcpTools, ...<span class="c-fn">createBuiltinTools</span>({ shell: {} })],
+  maxSteps: <span class="c-num">20</span>,
+  timeoutMs: <span class="c-num">120_000</span>,
+  maxCostUsd: <span class="c-num">2</span>,
+  context: { maxContextTokens: <span class="c-num">120_000</span>, strategy: <span class="c-str">"summarize"</span> },
+});`,
+  multi: `<span class="c-key">import</span> { createAgent, agentAsTool, runParallel, createSupervisor } <span class="c-key">from</span> <span class="c-str">"aetherflow"</span>;
+
+<span class="c-com">// 专家 Agent：拥有独立的消息历史</span>
+<span class="c-key">const</span> sqlExpert = <span class="c-fn">createAgent</span>({ name: <span class="c-str">"sql"</span>, model: <span class="c-str">"openai:gpt-4o"</span>,
+  instructions: <span class="c-str">"你是 SQL 专家。"</span>, tools: [queryWarehouse] });
+<span class="c-key">const</span> vizExpert = <span class="c-fn">createAgent</span>({ name: <span class="c-str">"viz"</span>, model: <span class="c-str">"anthropic:claude-sonnet-4-20250514"</span>,
+  instructions: <span class="c-str">"你是可视化专家。"</span> });
+
+<span class="c-com">// 主管只做拆解与分发，不亲自执行 —— 上下文开销可控、失败可定位</span>
+<span class="c-key">const</span> supervisor = <span class="c-fn">createSupervisor</span>({
+  model: <span class="c-str">"anthropic:claude-sonnet-4-20250514"</span>,
+  experts: [sqlExpert, vizExpert],
+});
+
+<span class="c-com">// 或者：把任意 Agent 当作工具委派（上下文隔离）</span>
+<span class="c-key">const</span> planner = <span class="c-fn">createAgent</span>({
+  name: <span class="c-str">"planner"</span>, model: <span class="c-str">"openai:gpt-4o"</span>,
+  instructions: <span class="c-str">"拆解任务并委派给专家。"</span>,
+  tools: [<span class="c-fn">agentAsTool</span>(sqlExpert), <span class="c-fn">agentAsTool</span>(vizExpert)],
+});
+
+<span class="c-com">// 冗余校验：多个模型同时跑，取全部结果比对</span>
+<span class="c-key">const</span> results = <span class="c-key">await</span> <span class="c-fn">runParallel</span>([agentA, agentB, agentC], <span class="c-str">"总结这份合同的风险点"</span>, {
+  concurrency: <span class="c-num">3</span>,
+});`,
+  eval: `<span class="c-key">import</span> { runEvalSuite, formatEvalReport, InteractionRecorder, createReplayProvider } <span class="c-key">from</span> <span class="c-str">"aetherflow"</span>;
+
+<span class="c-com">// 1) 录制一次真实交互 → 固化为可重放的测试资产</span>
+<span class="c-key">const</span> recorder = <span class="c-key">new</span> <span class="c-fn">InteractionRecorder</span>();
+<span class="c-key">const</span> recorded = recorder.<span class="c-fn">wrap</span>(realProvider);
+<span class="c-key">await</span> <span class="c-fn">createAgent</span>({ ..., registry: <span class="c-fn">registryOf</span>(recorded) }).<span class="c-fn">run</span>({ input: <span class="c-str">"…"</span> });
+
+<span class="c-com">// 2) 之后在 CI 里离线重放：零成本、确定性</span>
+<span class="c-key">const</span> replay = <span class="c-fn">createReplayProvider</span>(<span class="c-fn">InteractionRecorder.load</span>(recorder.<span class="c-fn">save</span>()));
+
+<span class="c-com">// 3) 三层判定：确定性断言 / 自定义规则 / 模型评审</span>
+<span class="c-key">const</span> report = <span class="c-key">await</span> <span class="c-fn">runEvalSuite</span>({
+  name: <span class="c-str">"customer-support"</span>,
+  agent,
+  concurrency: <span class="c-num">4</span>,
+  cases: [
+    { name: <span class="c-str">"退款政策"</span>, input: <span class="c-str">"能退款吗？"</span>, contains: [<span class="c-str">"7 天"</span>] },
+    { name: <span class="c-str">"结构化输出"</span>, input: <span class="c-str">"提取工单字段"</span>, expected: { priority: <span class="c-str">"high"</span> } },
+    { name: <span class="c-str">"语气友好"</span>, input: <span class="c-str">"你们太慢了"</span>,
+      judge: { rubric: <span class="c-str">"是否先共情再给出解决方案，无推诿"</span>, minScore: <span class="c-num">0.8</span> } },
+  ],
+});
+
+console.<span class="c-fn">log</span>(<span class="c-fn">formatEvalReport</span>(report));
+<span class="c-com">// ✓ 2/3 passed | cost $0.0412 | 3.4s</span>`,
+};
+
+const streamEl = document.getElementById("stream");
+const meters = { steps: 0, tools: 0, tokens: 0, cost: 0 };
+let timer = null;
+
+function setMeter(id, value, barId, max, format) {
+  document.getElementById(id).textContent = format(value);
+  document.getElementById(barId).style.width = Math.min(100, (value / max) * 100) + "%";
+}
+
+function render() {
+  streamEl.innerHTML = "";
+  Object.assign(meters, { steps: 0, tools: 0, tokens: 0, cost: 0 });
+  setMeter("m-steps", 0, "b-steps", 3, (v) => v);
+  setMeter("m-tools", 0, "b-tools", 3, (v) => v);
+  setMeter("m-tokens", 0, "b-tokens", 2000, (v) => v.toLocaleString());
+  setMeter("m-cost", 0, "b-cost", 0.005, (v) => "$" + v.toFixed(4));
+  document.getElementById("m-finish").textContent = "running…";
+  document.getElementById("m-finish").style.color = "var(--warn)";
+  if (timer) clearInterval(timer);
+
+  let i = 0;
+  timer = setInterval(() => {
+    if (i >= EVENTS.length) {
+      clearInterval(timer);
+      document.getElementById("m-finish").textContent = "completed · 488ms";
+      document.getElementById("m-finish").style.color = "var(--ok)";
+      return;
+    }
+    const ev = EVENTS[i++];
+    const row = document.createElement("div");
+    row.className = "ev";
+    const t = new Date();
+    row.innerHTML =
+      `<span class="t">${String(t.getMinutes()).padStart(2, "0")}:${String(t.getSeconds()).padStart(2, "0")}</span>` +
+      `<span class="k ${ev.k}">${ev.k}</span>` +
+      `<span class="v">${ev.v.replace(/</g, "&lt;")}</span>`;
+    streamEl.appendChild(row);
+    streamEl.scrollTop = streamEl.scrollHeight;
+
+    if (ev.meters) {
+      Object.assign(meters, { ...meters, ...ev.meters });
+      setMeter("m-steps", meters.steps, "b-steps", 3, (v) => v);
+      setMeter("m-tools", meters.tools, "b-tools", 3, (v) => v);
+      setMeter("m-tokens", meters.tokens, "b-tokens", 2000, (v) => v.toLocaleString());
+      setMeter("m-cost", meters.cost, "b-cost", 0.005, (v) => "$" + v.toFixed(4));
+    }
+  }, 340);
+}
+
+document.getElementById("runBtn").addEventListener("click", render);
+
+document.querySelectorAll(".tab").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("pane").innerHTML = PANES[btn.dataset.tab];
+  });
+});
+
+document.getElementById("pane").innerHTML = PANES.quick;
+render();
+</script>
+</body>
+</html>
