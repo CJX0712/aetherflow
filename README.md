@@ -3,7 +3,7 @@
 **A universal, durable and observable runtime for AI agents.**
 TypeScript · Node 22 · zero vendor lock-in · MCP-native.
 
-[![CI](https://img.shields.io/badge/CI-passing-3ecf8e?style=flat-square)](https://github.com/chenxing/aetherflow/actions)
+[![CI](https://img.shields.io/badge/CI-passing-3ecf8e?style=flat-square)](https://github.com/CJX0712/aetherflow/actions)
 [![npm](https://img.shields.io/badge/npm-aetherflow-blue?style=flat-square)](https://www.npmjs.com/package/aetherflow)
 [![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](./LICENSE)
 [![node](https://img.shields.io/badge/node-%E2%89%A522.5.0-orange?style=flat-square)](https://nodejs.org)
