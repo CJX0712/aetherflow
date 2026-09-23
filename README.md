@@ -1,5 +1,12 @@
 # AetherFlow
 
+<p align="center">
+  <a href="https://github.com/CJX0712/aetherflow/actions/workflows/ci.yml"><img src="https://github.com/CJX0712/aetherflow/actions/workflows/ci.yml/badge.svg" alt="ci"></a>
+  <a href="https://github.com/CJX0712/aetherflow/releases"><img src="https://img.shields.io/github/v/release/CJX0712/aetherflow?sort=semver" alt="release"></a>
+  <a href="https://github.com/CJX0712/aetherflow/blob/main/LICENSE"><img src="https://img.shields.io/github/license/CJX0712/aetherflow" alt="license"></a>
+  <img src="https://img.shields.io/badge/author-%E6%99%A8%E6%98%9F-1f6feb" alt="author">
+</p>
+
 **A universal, durable and observable runtime for AI agents.**
 TypeScript · Node 22 · zero vendor lock-in · MCP-native.
 
